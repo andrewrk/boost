@@ -46,7 +46,7 @@ Output:
 - HTML emails. See [juice](https://github.com/LearnBoost/juice)
 - Embedding HTML in 3rd-party websites.
 
-## Why not just use juice ?
+## Why not just use juice directly ?
 
 Because then you cannot take advantage of template inheritance with your css.
 

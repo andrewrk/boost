@@ -52,4 +52,4 @@ Because then you cannot take advantage of template inheritance with your css.
 
 ## Projects using boost
 
-- none yet
+- [swig-email-templates](https://github.com/superjoe30/swig-email-templates)

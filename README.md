@@ -11,7 +11,7 @@ boost("/path/to/file.html", function(err, html) {
 });
 ```
 
-/path/to/file.html:
+`/path/to/file.html`:
 ```html
 <html>
 <head>
@@ -26,7 +26,7 @@ boost("/path/to/file.html", function(err, html) {
 </html>
 ```
 
-style.css
+`style.css`
 ```css
 p {
   text-decoration: underline;
@@ -42,6 +42,10 @@ Output:
 
 - HTML emails. See [juice](https://github.com/LearnBoost/juice)
 - Embedding HTML in 3rd-party websites.
+
+## Why not just use juice ?
+
+Because then you cannot take advantage of template inheritance with your css.
 
 ## Projects using boost
 

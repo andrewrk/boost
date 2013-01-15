@@ -2,7 +2,7 @@ var jsdom = require("jsdom")
   , fs = require('fs')
   , Batch = require('batch')
   , juice = require('juice')
-  , url = require('juice')
+  , url = require('url')
   , superagent = require('superagent')
   , assert = require('assert')
   , path = require('path')
@@ -29,7 +29,7 @@ function boostFile(filename, cb) {
 
 function juiceWithCb(html, css, cb) {
   try {
-    cb(null, juice(html, css));
+    cb(null, juice(html, css).trim());
   } catch (err) {
     cb(err);
   }

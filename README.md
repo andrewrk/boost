@@ -2,6 +2,9 @@
 
 Given HTML, boost will inline your CSS properties into the `style` attribute.
 
+boost builds on [juice](https://github.com/LearnBoost/juice), making your
+email templating task Even More Convenient.
+
 ## How to use
 
 ```js
@@ -34,7 +37,7 @@ p {
 ```
 
 Output:
-```
+```html
 <p style="color: red; text-decoration: underline;">Test</p>
 ```
 

@@ -91,7 +91,10 @@ function getStylesheetList(window) {
 }
 
 function extractCss(html, filename, cb) {
-  jsdom.env(html, function(err, window) {
+  // hack to force jsdom to see this argument as html content, not a url
+  // or a filename. https://github.com/tmpvar/jsdom/issues/554
+  var hackHtml = html + "\n";
+  jsdom.env(hackHtml, function(err, window) {
     if (err) return cb(err);
     var batch = new Batch();
     batch.push(function(cb) { getStylesData(window, cb); });
@@ -107,7 +110,7 @@ function extractCss(html, filename, cb) {
         stylesData.push(content);
       });
       var css = stylesData.join("\n");
-      cb(null, html, css);
+      cb(null, hackHtml, css);
     });
   });
 }

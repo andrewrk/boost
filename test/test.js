@@ -7,6 +7,7 @@ var boost = require('../')
 var testMap = {
   "no_css": true,
   "two_styles": true,
+  "remote_url": true,
 };
 describe("boost", function() {
   for (var testName in testMap) {

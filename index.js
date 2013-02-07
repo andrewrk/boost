@@ -1,7 +1,7 @@
 var jsdom = require("jsdom")
   , fs = require('fs')
   , Batch = require('batch')
-  , juice = require('juice')
+  , juiceDom = require('juice').juiceDom
   , url = require('url')
   , superagent = require('superagent')
   , assert = require('assert')
@@ -9,11 +9,39 @@ var jsdom = require("jsdom")
 
 module.exports = boostFile;
 boostFile.boostContent = boostContent;
+boostFile.boostDocument = boostDocument;
+
+function boostDocument(document, filename, cb) {
+  extractCssFromDocument(document, filename, function(err, css) {
+    if (err) return cb(err);
+      juiceWithCb(document, css, cb);
+  });
+}
 
 function boostContent(content, filename, cb) {
-  extractCss(content, filename, function(err, html, css) {
+  // hack to force jsdom to see this argument as html content, not a url
+  // or a filename. https://github.com/tmpvar/jsdom/issues/554
+  var html = content + "\n";
+  var options = {
+    features: {
+      QuerySelector: ['1.0'],
+      FetchExternalResources: false,
+      ProcessExternalResources: false,
+      MutationEvents: false,
+    },
+  };
+  var document;
+  try {
+    document = jsdom.html(html, null, options);
+  } catch (err) {
+    cb(err);
+    return;
+  }
+  boostDocument(document, filename, function(err) {
     if (err) return cb(err);
-    juiceWithCb(html, css, cb);
+    var inner = document.innerHTML;
+    document.parentWindow.close();
+    cb(null, inner);
   });
 }
 
@@ -27,26 +55,29 @@ function boostFile(filename, cb) {
   });
 }
 
-function juiceWithCb(html, css, cb) {
+function juiceWithCb(dom, css, cb) {
   try {
-    cb(null, juice(html, css).trim());
+    juiceDom(dom, css);
+    cb();
   } catch (err) {
     cb(err);
   }
 }
 
-function getStylesData(window, cb) {
+function getStylesData(document, cb) {
   var results = [];
-  var stylesList = window.document.getElementsByTagName("style");
-  var i, styleDataList, styleData;
+  var stylesList = document.getElementsByTagName("style");
+  var i, styleDataList, styleData, styleElement;
   for (i = 0; i < stylesList.length; ++i) {
-    styleDataList = stylesList[i].childNodes;
+    styleElement = stylesList[i];
+    styleDataList = styleElement.childNodes;
     if (styleDataList.length !== 1) {
       cb(new Error("empty style element"));
       return;
     }
     styleData = styleDataList[0].data;
     results.push(styleData);
+    styleElement.parentNode.removeChild(styleElement);
   }
   cb(null, results);
 }
@@ -74,9 +105,9 @@ function getRemoteContent(remoteUrl, cb) {
   });
 }
 
-function getStylesheetList(window) {
+function getStylesheetList(document) {
   var results = [];
-  var linkList = window.document.getElementsByTagName("link");
+  var linkList = document.getElementsByTagName("link");
   var link, i, j, attr, attrs;
   for (i = 0; i < linkList.length; ++i) {
     link = linkList[i];
@@ -86,31 +117,26 @@ function getStylesheetList(window) {
       attrs[attr.name.toLowerCase()] = attr.value.toLowerCase();
     }
     if (attrs.rel === 'stylesheet') results.push(attrs.href);
+    link.parentNode.removeChild(link);
   }
   return results;
 }
 
-function extractCss(html, filename, cb) {
-  // hack to force jsdom to see this argument as html content, not a url
-  // or a filename. https://github.com/tmpvar/jsdom/issues/554
-  var hackHtml = html + "\n";
-  jsdom.env(hackHtml, function(err, window) {
+function extractCssFromDocument(document, filename, cb) {
+  var batch = new Batch();
+  batch.push(function(cb) { getStylesData(document, cb); });
+  getStylesheetList(document).forEach(function(stylesheetHref) {
+    batch.push(function(cb) {
+      getHrefContent(stylesheetHref, filename, cb);
+    });
+  });
+  batch.end(function(err, results) {
     if (err) return cb(err);
-    var batch = new Batch();
-    batch.push(function(cb) { getStylesData(window, cb); });
-    getStylesheetList(window).forEach(function(stylesheetHref) {
-      batch.push(function(cb) {
-        getHrefContent(stylesheetHref, filename, cb);
-      });
+    var stylesData = results.shift();
+    results.forEach(function(content) {
+      stylesData.push(content);
     });
-    batch.end(function(err, results) {
-      assert.ifError(err);
-      var stylesData = results.shift();
-      results.forEach(function(content) {
-        stylesData.push(content);
-      });
-      var css = stylesData.join("\n");
-      cb(null, hackHtml, css);
-    });
+    var css = stylesData.join("\n");
+    cb(null, css);
   });
 }

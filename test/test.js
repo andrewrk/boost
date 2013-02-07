@@ -25,7 +25,7 @@ describe("boost", function() {
       });
       batch.end(function(err, results) {
         if (err) return cb(err);
-        assert.strictEqual(results[0], results[1].trim());
+        assert.strictEqual(results[1].trim(), results[0].trim());
         cb();
       });
     };

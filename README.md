@@ -38,7 +38,13 @@ p {
 
 Output:
 ```html
-<p style="color: red; text-decoration: underline;">Test</p>
+<html>
+<head>
+</head>
+<body>
+  <p style="color: red; text-decoration: underline;">Test</p>
+</body>
+</html>
 ```
 
 ## What is this useful for ?
